@@ -1,21 +1,21 @@
 
 import logging
 from io import BytesIO
-from typing import Annotated, Literal
+from typing import Literal
 
 # from langchain_anthropic import ChatAnthropic
 # from langchain_ollama.chat_models import ChatOllama
 
 from langchain_openai import ChatOpenAI
+from langchain import hub
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
-from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
 from PIL import Image
-from typing_extensions import TypedDict
 
-from .retriever_tool import index_files
+from .retriever_tool import index_files, retriev_docs
 from .save_file import save_csv_file
+from .state import State
 # from .arxiv import arxiv_search
 # from .latex import render_latex_pdf
 # from .pdf import read_pdf
@@ -52,12 +52,9 @@ Start a new line, followed by field data, use double quote for fields and comma 
 Please use the query date as Date field, date format is YYYY-MM-DD, for example, 2025-12-30
 
 Finally, ask me if I want to write the content into a file
+
+No matter whether user want to write content to file or not, in the end, you should return to the beginning and ask user for next stock input
 """
-
-
-class State(TypedDict):
-    messages: Annotated[list, add_messages]
-
 
 def print_stream(stream):
     for s in stream:
@@ -72,6 +69,7 @@ def run_workflow():
     tools = [index_files, save_csv_file]
     tool_node = ToolNode(tools)
 
+    prompt = hub.pull('rlm/rag-prompt')
     model = ChatOpenAI(model="gpt-4o-mini").bind_tools(tools)
     # model = ChatAnthropic(model="claude-3-5-sonnet-20241022").bind_tools(tools)
     # model = ChatOllama(model="llama3-groq-tool-use:8b").bind_tools(tools)
@@ -97,15 +95,18 @@ def run_workflow():
 
     workflow = StateGraph(State)
     workflow.add_node("agent", call_model)
+    # workflow.add_node("retriver", retriev_docs)
     workflow.add_node("tools", tool_node)
+    
     workflow.add_edge(START, "agent")
+    # workflow.add_edge("retriver", "agent")
     workflow.add_conditional_edges("agent", should_continue)
     workflow.add_edge("tools", "agent")
 
     checkpointer = MemorySaver()
     graph = workflow.compile(checkpointer=checkpointer)
 
-    Image.open(BytesIO(graph.get_graph().draw_mermaid_png())).show()
+    # Image.open(BytesIO(graph.get_graph().draw_mermaid_png())).show()
 
     logger.info("Created workflow agent graph")
 

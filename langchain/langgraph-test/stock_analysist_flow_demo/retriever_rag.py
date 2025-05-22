@@ -2,7 +2,7 @@ import logging
 from typing import Annotated
 
 from dotenv import load_dotenv
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import DirectoryLoader
 from langchain_community.vectorstores import Chroma
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import OpenAIEmbeddings
@@ -28,9 +28,9 @@ def read_pdfs_and_split():
     Returns:
         _type_: _description_
     """
-    filename = "/Users/james/projects/learnings/AI_Learnings/langchain/langgraph-test/data_sources/2025q1-alphabet-earnings-release.pdf"
-    loader = PyPDFLoader(file_path=filename)
-    docs = []
+    # filename = "/Users/james/projects/learnings/AI_Learnings/langchain/langgraph-test/data_sources/2025q1-alphabet-earnings-release.pdf"
+    # loader = PyPDFLoader(file_path=filename)
+    loader = DirectoryLoader("/Users/james/projects/learnings/AI_Learnings/langchain/langgraph-test/data_sources", glob="**/*.pdf", show_progress=True)
     docs = loader.load()
 
     text_splitter = RecursiveCharacterTextSplitter(
@@ -141,8 +141,7 @@ def generate_answer(state):
     Here is the user question: \n\n {question}. 
     
     Find the answer for the given question in the document context,
-    If there is no relevant information in the document, please say "I don't know".
-    
+  
     Return LLMResponse.
     """
     

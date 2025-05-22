@@ -26,6 +26,11 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
+install pdf loader related
+```
+pip install "unstructured[pdf]"
+```
+
 install juypter notebook
 ```
 pip install notebook

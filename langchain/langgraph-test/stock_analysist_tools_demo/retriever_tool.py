@@ -6,7 +6,7 @@ from langchain_core.tools import tool
 from langgraph.prebuilt import InjectedState
 
 from langchain_community.vectorstores import Chroma
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import DirectoryLoader
 from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from dotenv import load_dotenv
@@ -27,9 +27,9 @@ def read_pdfs_and_split():
     Returns:
         _type_: _description_
     """
-    filename = "/Users/james/projects/learnings/AI_Learnings/langchain/langgraph-test/data_sources/2025q1-alphabet-earnings-release.pdf"
-    loader = PyPDFLoader(file_path=filename)
-    docs = []
+    #filename = "/Users/james/projects/learnings/AI_Learnings/langchain/langgraph-test/data_sources/2025q1-alphabet-earnings-release.pdf"
+    #loader = PyPDFLoader(file_path=filename)
+    loader = DirectoryLoader("/Users/james/projects/learnings/AI_Learnings/langchain/langgraph-test/data_sources", glob="**/*.pdf", show_progress=True)
     docs = loader.load()
 
     text_splitter = RecursiveCharacterTextSplitter(

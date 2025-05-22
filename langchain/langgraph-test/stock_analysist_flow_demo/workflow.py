@@ -1,3 +1,4 @@
+"""Define the workflow for stock analysis using LangGraph."""
 import logging
 from langgraph.graph import StateGraph, START, END
 from IPython.display import Image, display
@@ -108,13 +109,13 @@ def run_workflow():
         try:
             for s in stream:
                 message = s["messages"][-1]
-                logger.info(f"Message received: {message.content[:200]}...")
+                logger.info("Message received: %s...", message.content[:200])
                 message.pretty_print()
         except ValidationError as exc:
             print("Error: " + repr(exc.errors()[0]))
 
     config = {"configurable": {"thread_id": 1}}
-    logger.info(f"Set configuration: {config}")
+    logger.info("Set configuration: %s", config)
     
     # logger.info("Starting conversation with initial prompt")
     # inputs = {"messages": [("user", INITIAL_PROMPT)]}
@@ -124,7 +125,7 @@ def run_workflow():
     logger.info("Entering interactive chat loop")
     while True:
         user_input = input("User: ")
-        logger.info(f"Received user input: {user_input[:200]}...")
+        logger.info("Received user input: %s...", user_input[:200])
         inputs = {"messages": [("user", user_input)]}
         if user_input.lower() in ["quit", "exit", "q"]:
             print("Goodbye!")

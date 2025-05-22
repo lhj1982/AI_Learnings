@@ -1,3 +1,6 @@
+"""
+define a workflow for stock analysis using LangGraph and LangChain.
+"""
 import logging
 from typing import Literal
 
@@ -12,11 +15,6 @@ from langgraph.prebuilt import ToolNode
 from .retriever_tool import index_files
 from .save_file import save_csv_file
 from .state import State
-# from .arxiv import arxiv_search
-# from .latex import render_latex_pdf
-# from .pdf import read_pdf
-
-# Setup module logger
 logger = logging.getLogger(__name__)
 
 INITIAL_PROMPT = """
@@ -54,13 +52,15 @@ No matter whether user want to write content to file or not, in the end, you sho
 
 
 def print_stream(stream):
+    """print messages from stream"""
     for s in stream:
         message = s["messages"][-1]
-        logger.info(f"Message received: {message.content[:200]}...")
+        logger.info("Message received: %s...", message.content[:200])
         message.pretty_print()
 
 
 def run_workflow():
+    """main workflow function"""
     logger.info("Initializing workflow")
 
     tools = [index_files, save_csv_file]
@@ -70,7 +70,7 @@ def run_workflow():
     # model = ChatAnthropic(model="claude-3-5-sonnet-20241022").bind_tools(tools)
     # model = ChatOllama(model="llama3-groq-tool-use:8b").bind_tools(tools)
 
-    logger.info(f"Initialized model and loaded {len(tools)} tools")
+    logger.info("Initialized model and loaded %d tools", len(tools))
 
     # Define the function that determines whether to continue or not
     def should_continue(state: State) -> Literal["tools", END]:
@@ -87,7 +87,7 @@ def run_workflow():
         return {"messages": [response]}
 
     config = {"configurable": {"thread_id": 1}}
-    logger.info(f"Set configuration: {config}")
+    logger.info("Set configuration: %s", config)
 
     workflow = StateGraph(State)
     workflow.add_node("agent", call_model)
@@ -114,7 +114,7 @@ def run_workflow():
     logger.info("Entering interactive chat loop")
     while True:
         user_input = input("User: ")
-        logger.info(f"Received user input: {user_input[:200]}...")
+        logger.info("Received user input: %s...", user_input[:200])
         inputs = {"messages": [("user", user_input)]}
         if user_input.lower() in ["quit", "exit", "q"]:
             print("Goodbye!")

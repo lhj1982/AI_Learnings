@@ -1,3 +1,5 @@
+"""define a retriever tool and its related functions
+"""
 import logging
 from typing import Annotated
 from langchain_core.tools import tool
@@ -36,7 +38,7 @@ def read_pdfs_and_split():
 
     all_splits = text_splitter.split_documents(docs)
 
-    logger.info(f"Split the pdf into {len(all_splits)} sub-documents.")
+    logger.info("Split the pdf into %d sub-documents.", len(all_splits))
     return all_splits
 
 

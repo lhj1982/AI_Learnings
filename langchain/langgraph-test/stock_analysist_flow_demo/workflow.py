@@ -114,7 +114,7 @@ def run_workflow():
         except ValidationError as exc:
             print("Error: " + repr(exc.errors()[0]))
 
-    config = {"configurable": {"thread_id": 1}}
+    config = {"configurable": {"thread_id": 1}, "run_name": "stock_analysist_flow_demo", "tags": ["langgraph", "agent"]}
     logger.info("Set configuration: %s", config)
     
     # logger.info("Starting conversation with initial prompt")

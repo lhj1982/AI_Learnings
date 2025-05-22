@@ -1,6 +1,6 @@
 """State management for the graph."""
 
-from typing import Annotated, Literal, List
+from typing import Annotated, List
 from typing_extensions import TypedDict
 from langchain_core.documents import Document
 from langgraph.graph.message import add_messages

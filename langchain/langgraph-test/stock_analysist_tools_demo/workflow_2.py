@@ -1,19 +1,15 @@
-
 import logging
-from io import BytesIO
 from typing import Literal
 
 # from langchain_anthropic import ChatAnthropic
 # from langchain_ollama.chat_models import ChatOllama
 
 from langchain_openai import ChatOpenAI
-from langchain import hub
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import ToolNode
-from PIL import Image
 
-from .retriever_tool import index_files, retriev_docs
+from .retriever_tool import index_files
 from .save_file import save_csv_file
 from .state import State
 # from .arxiv import arxiv_search
@@ -56,6 +52,7 @@ Finally, ask me if I want to write the content into a file
 No matter whether user want to write content to file or not, in the end, you should return to the beginning and ask user for next stock input
 """
 
+
 def print_stream(stream):
     for s in stream:
         message = s["messages"][-1]
@@ -69,7 +66,6 @@ def run_workflow():
     tools = [index_files, save_csv_file]
     tool_node = ToolNode(tools)
 
-    prompt = hub.pull('rlm/rag-prompt')
     model = ChatOpenAI(model="gpt-4o-mini").bind_tools(tools)
     # model = ChatAnthropic(model="claude-3-5-sonnet-20241022").bind_tools(tools)
     # model = ChatOllama(model="llama3-groq-tool-use:8b").bind_tools(tools)
@@ -97,7 +93,7 @@ def run_workflow():
     workflow.add_node("agent", call_model)
     # workflow.add_node("retriver", retriev_docs)
     workflow.add_node("tools", tool_node)
-    
+
     workflow.add_edge(START, "agent")
     # workflow.add_edge("retriver", "agent")
     workflow.add_conditional_edges("agent", should_continue)

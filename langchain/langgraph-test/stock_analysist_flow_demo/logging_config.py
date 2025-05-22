@@ -15,7 +15,7 @@ def setup_logging():
     logger.setLevel(logging.INFO)
 
     # Create file handler
-    log_file = log_dir / "stock_analysist_new.log"
+    log_file = log_dir / "stock_analysist_flow_demo.log"
     file_handler = logging.FileHandler(log_file)
     file_handler.setLevel(logging.INFO)
 

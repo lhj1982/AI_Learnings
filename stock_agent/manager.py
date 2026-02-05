@@ -14,12 +14,25 @@ from pdf_retrieve import retrieve_pdf_chunks
 
 from cosmos_agent_helpers import parse_agent_json_output
 
-# Import Cosmos-compatible agents
-from stock_agents.guardrail_agent_cosmos import stock_input_guardrail_cosmos, GuardrailResult
-from stock_agents.planner_agent_cosmos import planner_agent_cosmos, SearchPlan
-from stock_agents.search_agent_cosmos import search_agent_cosmos
-from stock_agents.analyst_agent_cosmos import analyst_agent_cosmos, StockNote
-from stock_agents.verifier_agent_cosmos import verifier_agent_cosmos, VerificationResult
+# Conditionally import agents based on API configuration
+llm_api_key = os.getenv("LLM_API_KEY")
+llm_base_url = os.getenv("LLM_BASE_URL")
+USE_COSMOS = bool(llm_api_key and llm_base_url)
+
+if USE_COSMOS:
+    print("Loading Cosmos-compatible agents...")
+    from stock_agents.guardrail_agent_cosmos import stock_input_guardrail_cosmos as stock_input_guardrail, GuardrailResult
+    from stock_agents.planner_agent_cosmos import planner_agent_cosmos as planner_agent, SearchPlan
+    from stock_agents.search_agent_cosmos import search_agent_cosmos as search_agent
+    from stock_agents.analyst_agent_cosmos import analyst_agent_cosmos as analyst_agent, StockNote
+    from stock_agents.verifier_agent_cosmos import verifier_agent_cosmos as verifier_agent, VerificationResult
+else:
+    print("Loading OpenAI-compatible agents...")
+    from stock_agents.guardrail_agent import stock_input_guardrail, GuardrailResult
+    from stock_agents.planner_agent import planner_agent, SearchPlan
+    from stock_agents.search_agent import search_agent
+    from stock_agents.analyst_agent import analyst_agent, StockNote
+    from stock_agents.verifier_agent import verifier_agent, VerificationResult
 
 
 front_agent = Agent(
@@ -28,8 +41,8 @@ front_agent = Agent(
         "You are the entrypoint for a stock research pipeline. "
         "Normalize the user request if needed. Keep the user's intent."
     ),
-    input_guardrails=[stock_input_guardrail_cosmos],
-    model="gpt-5",
+    input_guardrails=[stock_input_guardrail],
+    model="gpt-5" if USE_COSMOS else "gpt-4.1",
 )
 
 
@@ -98,16 +111,19 @@ class StockResearchManager:
 
         # Plan searches
         with trace("plan"):
-            plan_res = await Runner.run(planner_agent_cosmos, f"{user_query}\nEntity: {entity_id}\nDate: {today}")
-            # Parse JSON response manually
-            plan: SearchPlan = parse_agent_json_output(plan_res.final_output, SearchPlan)
+            plan_res = await Runner.run(planner_agent, f"{user_query}\nEntity: {entity_id}\nDate: {today}")
+            # Parse response (manually for Cosmos, structured for OpenAI)
+            if USE_COSMOS:
+                plan: SearchPlan = parse_agent_json_output(plan_res.final_output, SearchPlan)
+            else:
+                plan: SearchPlan = plan_res.final_output
 
-        # Run searches (using Cosmos-compatible agent without WebSearchTool)
+        # Run searches
         summaries: list[str] = []
         for item in plan.searches:
             with trace("search"):
                 print(item.query, ", reason: ", item.reason)
-                sres = await Runner.run(search_agent_cosmos, f"Query: {item.query}\nReason: {item.reason}")
+                sres = await Runner.run(search_agent, f"Query: {item.query}\nReason: {item.reason}")
                 summaries.append(sres.final_output)
 
         # Optional PDF RAG context from DB (prefers newest docs)
@@ -128,9 +144,12 @@ PDF Context:
         print(analyst_input)
         # Draft analysis
         with trace("analyze"):
-            ares = await Runner.run(analyst_agent_cosmos, analyst_input)
-            # Parse JSON response manually
-            note: StockNote = parse_agent_json_output(ares.final_output, StockNote)
+            ares = await Runner.run(analyst_agent, analyst_input)
+            # Parse response (manually for Cosmos, structured for OpenAI)
+            if USE_COSMOS:
+                note: StockNote = parse_agent_json_output(ares.final_output, StockNote)
+            else:
+                note: StockNote = ares.final_output
 
         # Verify
         verify_input = f"""Date: {today}
@@ -146,9 +165,12 @@ PDF Context:
 {pdf_chunks if pdf_chunks else "No PDF context available"}
 """
         with trace("verify"):
-            vres = await Runner.run(verifier_agent_cosmos, verify_input)
-            # Parse JSON response manually
-            verdict: VerificationResult = parse_agent_json_output(vres.final_output, VerificationResult)
+            vres = await Runner.run(verifier_agent, verify_input)
+            # Parse response (manually for Cosmos, structured for OpenAI)
+            if USE_COSMOS:
+                verdict: VerificationResult = parse_agent_json_output(vres.final_output, VerificationResult)
+            else:
+                verdict: VerificationResult = vres.final_output
 
         # Save
         raw_context = {

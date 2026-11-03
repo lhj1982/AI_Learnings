@@ -140,7 +140,7 @@ docker compose up --build
 
 
 # Design
-
+```
                          Mac
 ┌────────────────────────────────────────────────────┐
 │                                                    │
@@ -162,3 +162,14 @@ docker compose up --build
 │   vLLM/Qwen :8001  ← native on Mac                 │
 │                                                    │
 └────────────────────────────────────────────────────┘
+```
+
+### Configure k8s with minikube in local
+
+```
+minikube start \
+  --profile ai-infra \
+  --driver=docker \
+  --cpus=2 \
+  --memory=4000
+```

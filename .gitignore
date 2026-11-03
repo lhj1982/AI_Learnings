@@ -2,6 +2,7 @@
 .git
 **/.env
 .DS_Store
+.vscode
 
 __pycache__
 *.log
